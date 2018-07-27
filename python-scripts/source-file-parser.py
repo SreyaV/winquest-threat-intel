@@ -42,8 +42,8 @@ while i<len(info)-2:
 
 formatted_sources=open('sources.txt', 'w')
 for i in range (0,len(src)):
-    print(src[i] + '  ' + url[i] + '  ' + itype[i])
-    formatted_sources.write(src[i] + '  ' + url[i] + '  ' + itype[i] + '\n')
+    print(src[i] + '    ' + url[i] + '    ' + itype[i])
+    formatted_sources.write(src[i] + '    ' + url[i] + '    ' + itype[i] + '\n')
 
 formatted_sources.close()
 #print("\n".join(info))
