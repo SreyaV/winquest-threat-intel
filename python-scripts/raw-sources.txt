@@ -1,6 +1,6 @@
-snort 		https://www.talosintelligence.com/documents/ip-blacklist (IP)
+snort 		http://labs.snort.org/feeds/ip-filter.blf (IP)
 talos			https://www.talosintelligence.com/documents/ip-blacklist (IP)
 et_ips 		http://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt (IP)
 Blacklist		https://github.com/mitchellkrogza/Ultimate.Hosts.Blacklist (IP & Domains)
 Abuse		https://ransomwaretracker.abuse.ch/blocklist/ (IP & URLS)
-abuse		https://sslbl.abuse.ch/blacklist/ (SHA-1)
+abuse		https://sslbl.abuse.ch/blacklist/sslblacklist.csv (SHA-1)

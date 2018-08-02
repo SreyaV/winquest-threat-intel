@@ -28,7 +28,7 @@ for intel in raw_intel:
     meta_url=details[1]
     indicator = intel_type[details[2].upper()]
     line = [field, indicator, meta_src, meta_desc, meta_url]
-    #print(line)
+    #   print(line)
 
 ##        for intel in data:
 ##            line=[]
