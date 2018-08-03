@@ -26,9 +26,9 @@ def main():
     newpath = r"C:/Users/Sreya Vangara/Documents/winquest-threat-intel/python-scripts/Logs/" + "WCIQ-" + today
     if not os.path.exists(newpath):
         os.makedirs(newpath)
-    output = open(newpath + '/formatted-intel.txt','w') 
+    output = open(newpath + '/formatted-intel.txt', r+) 
 
-    print("hi")
+
 
     intel_type = {'IP' : '::ADDR' , 'DOMAINS' : '::DOMAIN' , 'URLS' : 'URL' , 'SHA-1' : '::CERT_HASH'}  #for indicator_type
     src_info = sources.read().splitlines()  #for meta.source
@@ -36,17 +36,22 @@ def main():
 
     #print(str(datetime.now()))
 
+    repeats = []
+    
     for source in src_info:
         source=source.split()
         if (source[0].upper() in ['SNORT', 'TALOS', 'ET_IPS']) or (source[0] == 'Abuse'):
             raw_data = urllib.request.urlopen(source[1])
-            data = list ( set ( raw_data.read().decode('utf-8').splitlines() ) )
+            data = list ( raw_data.read().decode('utf-8').splitlines() ) 
             
             for r in data:
                 if r[0]!='#':
-                    line = [r, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
+                    if r in output.read():
+                        repeats.append(r)
+                    else:
+                        line = [r, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
 
-
+                    
         
         elif source[0] == 'abuse':
             raw_data = urllib.request.urlopen(source[1])
@@ -55,7 +60,10 @@ def main():
             for r in data:
                 if r[0]!='#':
                     intel = r[r.find(',')+1: ].split(',')
-                    line = [r[0], intel_type[source[2].upper()], source[0], r[1], get_metaurl(source[0], raw_src_info)]
+                    if intel[0] in output.read():
+                        repeats.append(intel[0])
+                    else:
+                        line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], get_metaurl(source[0], raw_src_info)]
 
 
 
@@ -67,7 +75,10 @@ def main():
                     for line in my_zip_file.open(contained_file).readlines():
                         d_line = line.decode('utf-8')
                         d_line=d_line.replace('\n','')
-                        line = [d_line, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
+                        if d_line in output.read():
+                            repeats.append(d_line)
+                        else:
+                            line = [d_line, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
 
 
 
