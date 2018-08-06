@@ -1,0 +1,4 @@
+Errors encountered: 
+Blacklist does not link directly to the intel file
+Abuse does not have a valid link to intel
+Abuse does not have a valid link to intel

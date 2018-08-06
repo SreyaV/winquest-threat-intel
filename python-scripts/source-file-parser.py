@@ -12,6 +12,8 @@ info = info.split()
 src = []
 url = []
 itype = []
+valid_urls = {'snort' : 'https://www.talosintelligence.com/documents/ip-blacklist'}
+
 
 i=0
 while i<len(info):
@@ -25,7 +27,7 @@ i=0
 while i<len(info)-2:
     info[i+2]=info[i+2].replace('(','').replace(')','')
     for elem in info[i+2].split('&'):
-        src.append(info[i])
+        src.append(info[i]) 
         url.append(info[i+1])        
         itype.append(elem)
     i=i+3

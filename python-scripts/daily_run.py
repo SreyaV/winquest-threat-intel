@@ -15,12 +15,12 @@ log = open(newpath + '/log.txt','w')
 
 log.write("Start Time: "+ str(datetime.now()) + '\n')
 
-repeats = broformattertest.bro_generator(newpath)
+counter = broformattertest.bro_generator(newpath)
 
 log.write("End Time: "+ str(datetime.now()) + '\n')
 log.write("Total time taken: " + str(time.clock() - start_time) + " seconds\n")
-log.write("Total intel items processed: "+ repeats[-1] + '\n')
-log.write("Redundant intel: " + '\n' + '\n'.join(repeats[ :-1]))
+log.write("Total intel items processed: "+ str(counter) + '\n')
+#log.write("Redundant intel: " + '\n' + '\n'.join(repeats[ :-1]))
 log.close()
 
 #input()

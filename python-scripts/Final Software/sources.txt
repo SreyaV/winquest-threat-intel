@@ -1,0 +1,8 @@
+snort    https://talos-intelligence-site.s3.amazonaws.com/production/document_files/files/000/042/379/original/ip_filter.blf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIXACIED2SPMSC7GA%2F20180806%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20180806T192144Z&X-Amz-Expires=3600&X-Amz-SignedHeaders=host&X-Amz-Signature=0fbd4ab6a4ea9d7ac522aaa0deac28119e445de3ebadfdb1125c3940e00ec1aa    IP
+talos    https://www.talosintelligence.com/documents/ip-blacklist    IP
+et_ips    http://rules.emergingthreats.net/open/suricata/rules/compromised-ips.txt    IP
+Blacklist    https://github.com/mitchellkrogza/Ultimate.Hosts.Blacklist/blob/master/ips.list.zip?raw=true    IP
+Blacklist    https://github.com/mitchellkrogza/Ultimate.Hosts.Blacklist/blob/master/domains.list.zip?raw=true    Domains
+Abuse    https://ransomwaretracker.abuse.ch/downloads/RW_IPBL.txt    IP
+Abuse    https://ransomwaretracker.abuse.ch/downloads/RW_URLBL.txt    URLS
+abuse    https://sslbl.abuse.ch/blacklist/sslblacklist.csv    SHA-1

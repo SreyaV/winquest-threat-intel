@@ -7,14 +7,14 @@ from datetime import datetime
 
 
 
-def get_metaurl(src_name, raw_src_info):
-    for line in raw_src_info:
-        line=line.split()
-        if src_name == line[0]:
-            for r in line:
-                if 'http' in r:
-                    return r
-    return '-'
+##def get_metaurl(src_name, raw_src_info):
+##    for line in raw_src_info:
+##        line=line.split()
+##        if src_name == line[0]:
+##            for r in line:
+##                if 'http' in r:
+##                    return r
+##    return '-'
 
 
 def check_repeats(intel, i_type, ips, domains, urls, sha1):
@@ -52,11 +52,24 @@ def check_repeats(intel, i_type, ips, domains, urls, sha1):
 
 def bro_generator(newpath):
     #Necessary Files
-    sources = open('sources.txt', 'r')  #Note: this contains direct links to the intel files from each source
-    raw_sources = open('raw-sources.txt', 'r')  #Note: this contains the original, umbrella URLs for each source
     
+    errors=[]
+    
+    try:
+        sources = open('sources.txt', 'r')  #Note: this contains direct links to the intel files from each source
+    except FileNotFoundError:
+        errors.append("sources.txt does not exist")
+        return 0
+
+##    try:
+##        raw_sources = open('raw-sources.txt', 'r')  #Note: this contains the original, umbrella URLs for each source
+##    except FileNotFoundError:
+##        errors.append("raw-sources.txt does not exist")
+##        return 0
+
     output = open(newpath + '/formatted-intel.txt','w') 
-    
+    error_log = open(newpath + '/errors-log.txt','w')
+    repeats_log = open(newpath + '/repeats-log.txt','w')
 
     intel_type = {'IP' : '::ADDR' , 'DOMAINS' : '::DOMAIN' , 'URLS' : 'URL' , 'SHA-1' : '::CERT_HASH'}  #for indicator_type
     src_info = sources.read().splitlines()  #for meta.source
@@ -67,76 +80,100 @@ def bro_generator(newpath):
     ips = set([])
     domains = set([])
     urls = set([])
-    sha1 = set ([])
-
-    print('check1')
-    
+    sha1 = set ([]) 
     repeats=[]
-    for source in src_info:
-        source=source.split()
-        if (source[0].upper() in ['SNORT', 'TALOS', 'ET_IPS']) or (source[0] == 'Abuse'):
 
-            print('check2')
-            
-            raw_data = urllib.request.urlopen(source[1])
-            data = list  ( raw_data.read().decode('utf-8').splitlines() ) 
+    
+    for source in src_info:
+        
+        source=source.split()
+        
+        if (source[0].upper() in ['SNORT', 'TALOS', 'ET_IPS']) or (source[0] == 'Abuse'):
+            try:
+                raw_data = urllib.request.urlopen(source[1])
+            except:
+                errors.append(source[0]+ " does not have a valid link to intel")
+
+            try:    
+                data = raw_data.read().decode('utf-8').splitlines()
+            except:
+                errors.append(source[0]+ " does not link directly to the intel file")
+                data=[]
             
             for r in data:
-                if r[0]!='#':
-                    if check_repeats(r, source[2].upper(), ips, domains, urls, sha1):
-                        line = [r, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
-                        counter = counter+1
-                        output.write ('\t'.join(line)+ '\n')
-                    else:
-                        repeats.append(r)
+                try:
+                    if r[0]!='#':
+                        if check_repeats(r, source[2].upper(), ips, domains, urls, sha1):
+                            line = [r, intel_type[source[2].upper()], source[0],  '-', source[1]]
+                            counter = counter+1
+                            output.write ('\t'.join(line)+ '\n')
+                        else:
+                            repeats.append(r)
+                except:
+                    errors.append(source[0] + " contains invalid intel")
 
         
         elif source[0] == 'abuse':
+            try:
+                raw_data = urllib.request.urlopen(source[1])
+            except:
+                errors.append(source[0]+ " does not have a valid link to intel")
 
-            print('check3')
+            try:    
+                data = raw_data.read().decode('utf-8').splitlines()
+            except:
+                errors.append(source[0]+ " does not link directly to the intel file")
+                data=[]
+                
             
-            raw_data = urllib.request.urlopen(source[1])
-
-            data = raw_data.read().decode('utf-8').splitlines()
             for r in data:
-                if r[0]!='#':
-                    
-                    intel = r[r.find(',')+1: ].split(',')
-                    
-                    if check_repeats(intel[0], source[2].upper(), ips, domains, urls, sha1):
-                        line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], get_metaurl(source[0], raw_src_info)]
-                        counter = counter+1
-                        output.write ('\t'.join(line) + '\n' )
-                    else:
-                        repeats.append(intel[0])
-
+                try:                
+                    if r[0]!='#':
+                        intel = r[r.find(',')+1: ].split(',')
+                        if check_repeats(intel[0], source[2].upper(), ips, domains, urls, sha1):
+                            line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], source[1]]
+                            counter = counter+1
+                            output.write ('\t'.join(line) + '\n' )
+                        else:
+                            repeats.append(intel[0])
+                
+                except:
+                    errors.append(source[0] + " contains invalid intel")
 
             
 
         elif source[0] == 'Blacklist':
+            try:
+                raw_data = urllib.request.urlopen(source[1])
+            except:
+                errors.append(source[0]+ " does not have a valid link to intel")
 
-            print('check4')
-            
-            raw_data=urllib.request.urlopen(source[1])
-            with ZipFile(BytesIO(raw_data.read())) as my_zip_file:
-                for contained_file in my_zip_file.namelist():
-                    # with open(("unzipped_and_read_" + contained_file + ".file"), "wb") as output:
-                    for line in my_zip_file.open(contained_file).readlines():
-                        #print('check5')
-                        d_line = line.decode('utf-8')
-                        d_line=d_line.replace('\n','')
-                        
-                        if check_repeats(d_line, source[2].upper(), ips, domains, urls, sha1):
-                            line = [d_line, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
-                            counter = counter+1
-                            output.write ('\t'.join(line) + '\n')
-                        else:
-                            repeats.append(d_line)
-    
-    #print(str(datetime.now()))
+            try:
+                with ZipFile(BytesIO(raw_data.read())) as my_zip_file:
+                    for contained_file in my_zip_file.namelist():
+                        # with open(("unzipped_and_read_" + contained_file + ".file"), "wb") as output:
+                        for line in my_zip_file.open(contained_file).readlines():
+                            try:
+                                d_line = line.decode('utf-8')
+                                d_line=d_line.replace('\n','')
+                                
+                                if check_repeats(d_line, source[2].upper(), ips, domains, urls, sha1):
+                                    line = [d_line, intel_type[source[2].upper()], source[0],  '-', source[1]]
+                                    counter = counter+1
+                                    output.write ('\t'.join(line) + '\n')
+                                else:
+                                    repeats.append(d_line)
+                            except:
+                                errors.append(source[0] + " contains invalid intel")
+            except:
+                errors.append(source[0]+ " does not link directly to the intel file")
+
     output.close()
-    repeats.append(str(counter))
-    return repeats
+    repeats_log.write("Repeated intel: \n" + '\n'.join(repeats))
+    repeats_log.close()
+    error_log.write("Errors encountered: \n" + '\n'.join(errors))
+    error_log.close()
+    return counter
 
 
 
