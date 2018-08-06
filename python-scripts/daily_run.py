@@ -1,4 +1,4 @@
-import broformatter
+import broformattertest
 import time
 import os
 from datetime import datetime
@@ -13,9 +13,14 @@ if not os.path.exists(newpath):
 
 log = open(newpath + '/log.txt','w')
 
-counter = broformatter.bro_generator(newpath)
 log.write("Start Time: "+ str(datetime.now()) + '\n')
+
+repeats = broformattertest.bro_generator(newpath)
+
+log.write("End Time: "+ str(datetime.now()) + '\n')
 log.write("Total time taken: " + str(time.clock() - start_time) + " seconds\n")
-log.write("Total intel items processed: "+ str(counter) + '\n')
-log.write("Redundant IPs: ")
+log.write("Total intel items processed: "+ repeats[-1] + '\n')
+log.write("Redundant intel: " + '\n' + '\n'.join(repeats[ :-1]))
 log.close()
+
+#input()

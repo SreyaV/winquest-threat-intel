@@ -22,8 +22,9 @@ def bro_generator(newpath):
     sources = open('sources.txt', 'r')  #Note: this contains direct links to the intel files from each source
     raw_sources = open('raw-sources.txt', 'r')  #Note: this contains the original, umbrella URLs for each source
     
-    output = open(newpath + '/formatted-intel.txt','r+') 
+    #output = open(newpath + '/formatted-intel.txt','r+') 
 
+    output = open ('totalintel.txt', 'w')
 
     intel_type = {'IP' : '::ADDR' , 'DOMAINS' : '::DOMAIN' , 'URLS' : 'URL' , 'SHA-1' : '::CERT_HASH'}  #for indicator_type
     src_info = sources.read().splitlines()  #for meta.source
@@ -41,12 +42,9 @@ def bro_generator(newpath):
             
             for r in data:
                 if r[0]!='#':
-                    if r in output.read():
-                        repeats.append(r)
-                    else:
-                        line = [r, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
-                        counter = counter+1
-                        output.write ('\t'.join(line)+ '\n')
+                    line = [r, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
+                    counter = counter+1
+                    output.write ('\t'.join(line)+ '\n')
 
         
         elif source[0] == 'abuse':
@@ -58,12 +56,10 @@ def bro_generator(newpath):
                     
                     intel = r[r.find(',')+1: ].split(',')
 
-                    if intel[0] in output.read():
-                        repeats.append(intel[0])
-                    else:
-                        line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], get_metaurl(source[0], raw_src_info)]
-                        counter = counter+1
-                        output.write ('\t'.join(line) + '\n' )
+
+                    line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], get_metaurl(source[0], raw_src_info)]
+                    counter = counter+1
+                    output.write ('\t'.join(line) + '\n' )
 
 
             
@@ -77,18 +73,16 @@ def bro_generator(newpath):
                         d_line = line.decode('utf-8')
                         d_line=d_line.replace('\n','')
 
-                        if d_line in output.read():
-                            repeats.append(d_line)
-                        else:
-                            line = [d_line, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
-                            counter = counter+1
-                            output.write ('\t'.join(line) + '\n')
+
+                        line = [d_line, intel_type[source[2].upper()], source[0],  '-', get_metaurl(source[0], raw_src_info)]
+                        counter = counter+1
+                        output.write ('\t'.join(line) + '\n')
     
     #print(str(datetime.now()))
     print(repeats)
     output.close()
     return counter
 
-
+bro_generator('a')
     
 
