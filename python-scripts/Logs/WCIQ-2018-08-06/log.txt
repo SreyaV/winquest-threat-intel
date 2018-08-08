@@ -1,4 +1,1 @@
-Start Time: 2018-08-06 14:58:47.976809
-End Time: 2018-08-06 15:13:09.337210
-Total time taken: 861.3609894870166 seconds
-Total intel items processed: 398102
+Start Time: 2018-08-06 16:51:27.251998

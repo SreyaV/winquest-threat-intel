@@ -2,6 +2,9 @@ Setup:
 
 Run Terminal Command:
 
+sudo crontab -e
+
+Add text:
 00 02 * * * python path/to/software/folder/DailyRun.py
 
 
