@@ -1,27 +1,20 @@
+#Main program; does all web scraping, parsing, formatting; is called by 'DailyRun.py'
+
 #Necessary Imports
 import csv
 import urllib.request
 from io import BytesIO
 from zipfile import ZipFile
 from datetime import datetime
+import sys
 
 
-
-##def get_metaurl(src_name, raw_src_info):
-##    for line in raw_src_info:
-##        line=line.split()
-##        if src_name == line[0]:
-##            for r in line:
-##                if 'http' in r:
-##                    return r
-##    return '-'
-
-
+#Function to check repeated intel
 def check_repeats(intel, i_type, ips, domains, urls, sha1):
-    if i_type == 'IP':
+    if i_type == 'IP':         #Separate sets for each intel type to improve efficiency
         length = len(ips)
         ips.add(intel)
-        if len(ips)> length:
+        if len(ips)> length:   #Add intel to set, see if set size increases; if it doesn't, the intel is a repeat
             return True
         else:
             return False
@@ -49,12 +42,13 @@ def check_repeats(intel, i_type, ips, domains, urls, sha1):
     else:
         return True
         
-#######################################################
 
+
+
+#Main function, called by 'DailyRun.py', returns counter variable with total number of intel processed
 def bro_generator(newpath):
-    #Necessary Files
     
-    errors=[]
+    errors=[]  #Stores all errors encountered so they can be analyzed later and the program doesn't crash
     
     try:
         sources = open('sources.txt', 'r')  #Note: this contains direct links to the intel files from each source
@@ -62,84 +56,82 @@ def bro_generator(newpath):
         errors.append("sources.txt does not exist")
         return 0
 
-##    try:
-##        raw_sources = open('raw-sources.txt', 'r')  #Note: this contains the original, umbrella URLs for each source
-##    except FileNotFoundError:
-##        errors.append("raw-sources.txt does not exist")
-##        return 0
 
-    output = open(newpath + '/formatted-intel.txt','w') 
-    error_log = open(newpath + '/errors-log.txt','w')
-    repeats_log = open(newpath + '/repeats-log.txt','w')
+    output = open(newpath + '/formatted-intel.txt','w')  #Formatted intel
+    error_log = open(newpath + '/errors-log.txt','w')    #Log with all error messages
+    repeats_log = open(newpath + '/repeats-log.txt','w') #Log with all repeated intel
 
     intel_type = {'IP' : '::ADDR' , 'DOMAINS' : '::DOMAIN' , 'URLS' : 'URL' , 'SHA-1' : '::CERT_HASH', 'DNS' : 'DOMAINS'}  #for indicator_type
-    src_info = sources.read().splitlines()  #for meta.source
-##    raw_src_info = raw_sources.read().splitlines()  #for meta.url
+    src_info = sources.read().splitlines()  #for meta.source and url
 
+    counter = 0    #To count intel analyzed
 
-    counter = 0
+    #Sets to store intel, used to check for repeats
     ips = set([])
     domains = set([])
     urls = set([])
     sha1 = set ([]) 
-    repeats=[]
+    repeats=[]  #Stores all repeated intel
 
+    src_info = src_info [1: ]   #Gets rid of first line of 'sources.txt', which is the path to the Logs directory
     
     for source in src_info:
 
         try:
-        
-            if source !="" and source[0]!= '#':
+            
+            if source !="" and source[0]!= '#':  #Ensure blank lines aren't read, sources can be commented out
 
                 source=source.split()
 
-        ##############
-                
+
+                #These sources are all plaintext txts with minimal metadata
                 if (source[0].upper() in ['SNORT', 'TALOS', 'ET_IPS', 'MALIPS', 'CIARMY', 'MALHOSTS']) or (source[0] == 'Abuse'):
                     try:
-                        raw_data = urllib.request.urlopen(source[1])
+                        raw_data = urllib.request.urlopen(source[1])  #Opens url of source
                     except:
                         errors.append(source[0]+ " does not have a valid link to intel")
+                        data=[]  #If url is unreachable, this source is not processed
 
                     try:    
-                        data = raw_data.read().decode('utf-8').splitlines()
+                        data = raw_data.read().decode('utf-8').splitlines()  #Reads full source
                     except:
                         errors.append(source[0]+ " does not link directly to the intel file")
-                        data=[]
+                        data=[]  #If url does not lead to readable intel, this source is not processed 
+                        
                     for r in data:
                         try:
                             if r != "" and r[0]!='#':
-                                if source[0].upper() == 'MALHOSTS':
+                                if source[0].upper() == 'MALHOSTS':  #This source contains extra unneeded data
                                     r = r.split()[-1]
-                                if r!= 'localhost':
-                                    if check_repeats(r, source[2].upper(), ips, domains, urls, sha1):
-                                        line = [r, intel_type[source[2].upper()], source[0],  '-', source[1]]
+                                if r!= 'localhost':  #Can't add 'localhost' as a malicious domain
+                                    if check_repeats(r, source[2].upper(), ips, domains, urls, sha1):  #Check if intel is repeated
+                                        line = [r, intel_type[source[2].upper()], source[0],  '-', source[1]]  #Formatted line to add to output text, dash is used because there is no desc metadata
                                         counter = counter+1
-                                        output.write ('    '.join(line)+ '\n')
+                                        output.write ('    '.join(line)+ '\n')  #\t was not consistent, replaced with literal tab
                                     else:
                                         repeats.append(r)
                         except:
-                            errors.append(source[0] + " contains invalid intel")
+                            errors.append(source[0] + " contains invalid intel")  #If intel line is not able to be processed, then this source contains some invalid intel (ex. uncommented non-intel text)
         
-        ################
-                
+
+                #This source is a csv with meta.desc metadata
                 elif source[0] == 'abuse':
                     try:
                         raw_data = urllib.request.urlopen(source[1])
                     except:
                         errors.append(source[0]+ " does not have a valid link to intel")
+                        data=[]
 
                     try:    
                         data = raw_data.read().decode('utf-8').splitlines()
                     except:
                         errors.append(source[0]+ " does not link directly to the intel file")
                         data=[]
-                        
                     
                     for r in data:
                         try:                
                             if r[0]!='#':
-                                intel = r[r.find(',')+1: ].split(',')
+                                intel = r[r.find(',')+1: ].split(',')  #This source contains intel and description metadata
                                 if check_repeats(intel[0], source[2].upper(), ips, domains, urls, sha1):
                                     line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], source[1]]
                                     counter = counter+1
@@ -150,8 +142,8 @@ def bro_generator(newpath):
                         except:
                             errors.append(source[0] + " contains invalid intel")
 
-        ####################            
-
+           
+                #This source's url leads to downloaded large zip files containing csv intel
                 elif source[0] == 'Blacklist':
                     try:
                         raw_data = urllib.request.urlopen(source[1])
@@ -159,12 +151,12 @@ def bro_generator(newpath):
                         errors.append(source[0]+ " does not have a valid link to intel")
 
                     try:
-                        with ZipFile(BytesIO(raw_data.read())) as my_zip_file:
+                        with ZipFile(BytesIO(raw_data.read())) as my_zip_file:  #To read zip file
                             for contained_file in my_zip_file.namelist():
                                 # with open(("unzipped_and_read_" + contained_file + ".file"), "wb") as output:
                                 for line in my_zip_file.open(contained_file).readlines():
                                     try:
-                                        d_line = line.decode('utf-8')
+                                        d_line = line.decode('utf-8')  #Decoded line from source (originally raw text)
                                         d_line=d_line.replace('\n','')
                                         
                                         if check_repeats(d_line, source[2].upper(), ips, domains, urls, sha1):
@@ -178,8 +170,8 @@ def bro_generator(newpath):
                     except:
                         errors.append(source[0]+ " does not link directly to the intel file")
 
-        ############################
 
+                #These sources are plaintext, but are very formatted, contain intel, desc metadata, and extra unneeded data
                 elif source[0].upper() in ['BOTCC', 'TOR']:
                     try:
                         raw_data = urllib.request.urlopen(source[1])
@@ -197,8 +189,8 @@ def bro_generator(newpath):
                         try:                
                             if r != "" and r[0]!='#':
                                 addresses = r[r.find('[')+1: r.find(']')].split(',')
-                                if 'msg' in r:
-                                    msg = r[r.find('msg')+5: r.find(';')-1]
+                                if 'msg' in r:  #meta.desc is contained in the msg field of each line in the source
+                                    msg = r[r.find('msg')+5: r.find(';')-1] #To extract the msg from the formatting
                                 else:
                                     msg = "-"
                                     
@@ -213,8 +205,8 @@ def bro_generator(newpath):
                         except:
                             errors.append(source[0] + " contains invalid intel")
 
-        ######################
 
+                #This source url leads to a downloaded, non-zip file with plaintext intel
                 elif source[0].upper() == 'ALIENVAULT':
                     try:
                         raw_data = urllib.request.urlopen(source[1])
@@ -231,9 +223,9 @@ def bro_generator(newpath):
                     for r in data:
                         try:                
                             if r!= "" and r[0]!='#':
-                                intel = r.split(" # ")
+                                intel = r.split(" # ")  #Each line in the source contains the intel and desc metadata
                                 if check_repeats(intel[0], source[2].upper(), ips, domains, urls, sha1):
-                                    line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], source[1]]
+                                    line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], source[1]
                                     counter = counter+1
                                     output.write ('    '.join(line) + '\n' )
                                 else:

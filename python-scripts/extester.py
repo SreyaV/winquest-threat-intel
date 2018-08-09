@@ -5,9 +5,8 @@ from zipfile import ZipFile
 from datetime import datetime
 import os
 
-raw_data = urllib.request.urlopen('http://www.malwaredomainlist.com/hostslist/hosts.txt')
-data = raw_data.read().decode('utf-8').splitlines() 
-for r in data:
-    if r!= "" and r[0]!= "#":
-        print(r.split()[-1])
+log_path = input()
+print(log_path)
+if not os.path.exists(log_path):
+    os.makedirs(log_path)
         

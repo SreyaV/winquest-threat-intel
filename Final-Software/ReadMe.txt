@@ -14,3 +14,4 @@ Add new sources to "sources.txt" in proper format
 ***Note: URL needs to lead directly to intel file
 
 
+To change location of "Logs" directory, replace first line of "sources.txt" with new file path
