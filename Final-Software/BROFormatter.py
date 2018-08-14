@@ -18,7 +18,7 @@ def check_repeats(intel, i_type, ips, domains, urls, sha1):
             return True
         else:
             return False
-    elif i_type == 'DOMAINS':
+    elif i_type == 'DOMAINS' or i_type == 'DNS':
         length = len(domains)
         domains.add(intel)
         if len(domains) > length:
@@ -61,7 +61,7 @@ def bro_generator(newpath):
     error_log = open(newpath + '/errors-log.txt','w')    #Log with all error messages
     repeats_log = open(newpath + '/repeats-log.txt','w') #Log with all repeated intel
 
-    intel_type = {'IP' : '::ADDR' , 'DOMAINS' : '::DOMAIN' , 'URLS' : 'URL' , 'SHA-1' : '::CERT_HASH', 'DNS' : 'DOMAINS'}  #for indicator_type
+    intel_type = {'IP' : '::ADDR' , 'DOMAINS' : '::DOMAIN' , 'URLS' : 'URL' , 'SHA-1' : '::CERT_HASH', 'DNS' : 'DOMAINS', 'SUBNET': 'SUBNET', 'EMAIL': 'EMAIL', 'USERNAME': 'USER_NAME', 'MD5': 'PUBKEY_HASH'}  #for indicator_type
     src_info = sources.read().splitlines()  #for meta.source and url
 
     counter = 0    #To count intel analyzed
@@ -73,6 +73,8 @@ def bro_generator(newpath):
     sha1 = set ([]) 
     repeats=[]  #Stores all repeated intel
 
+    output.write("#fields indicator    indicator_type    meta.source    meta.desc    meta.url") #Header for data
+    
     src_info = src_info [1: ]   #Gets rid of first line of 'sources.txt', which is the path to the Logs directory
     
     for source in src_info:
@@ -225,7 +227,7 @@ def bro_generator(newpath):
                             if r!= "" and r[0]!='#':
                                 intel = r.split(" # ")  #Each line in the source contains the intel and desc metadata
                                 if check_repeats(intel[0], source[2].upper(), ips, domains, urls, sha1):
-                                    line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], source[1]
+                                    line = [intel[0], intel_type[source[2].upper()], source[0], intel[1], source[1]]
                                     counter = counter+1
                                     output.write ('    '.join(line) + '\n' )
                                 else:
